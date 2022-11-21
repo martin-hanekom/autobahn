@@ -13,6 +13,7 @@ typedef struct {
   sf::RectangleShape screen;
   sf::RectangleShape frontWheels[2];
   sf::RectangleShape backWheels[2];
+  sf::CircleShape fumes[3];
   sf::Vector2f pos;
   sf::Vector2f displayPos;
   float speed;

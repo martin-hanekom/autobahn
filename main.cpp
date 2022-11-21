@@ -15,20 +15,20 @@ void updateDisplayPos(sf::Vector2f &pos, sf::Vector2f &displayPos) {
 }
 
 void update(float dt) {
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && car.speed <= CAR_BRAKE_MIN) {
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+    car.speed *= CAR_BRAKE - CAR_SLOW_FRICTION / (abs(car.speed) + 1);
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && car.speed <= CAR_BRAKE_MIN) {
     car.speed -= CAR_ACC * dt;
   } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && car.speed >= -CAR_BRAKE_MIN) {
     car.speed += CAR_ACC * dt;
+  } else {
+    car.speed *= CAR_FRICTION - CAR_SLOW_FRICTION / (abs(car.speed) + 1);
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && car.turnAngle < CAR_MAX_TURN) {
     car.turnAngle += CAR_TURN * dt;
   } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && car.turnAngle > -CAR_MAX_TURN) {
     car.turnAngle -= CAR_TURN * dt;
   }
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-    car.speed *= (abs(car.speed) > CAR_BRAKE_MIN) ? CAR_BRAKE : 0;
-  }
-  car.speed *= CAR_FRICTION;
   
   float distance = car.speed * dt;
   if (car.turnAngle != 0) {

@@ -27,9 +27,10 @@
 #define CHASSIS_WHEEL_D ceil(sqrt((CHASSIS_W / 2) * (CHASSIS_W / 2) + (CHASSIS_H / 4) * (CHASSIS_H / 4)))
 #define WHEEL_R CHASSIS_H / 2
 #define CAR_ACC 30
-#define CAR_FRICTION 0.999
+#define CAR_FRICTION 0.997
+#define CAR_SLOW_FRICTION 0.1
 #define CAR_BRAKE 0.97
-#define CAR_BRAKE_MIN 0.1
+#define CAR_BRAKE_MIN 2
 #define CAR_TURN 1
 #define CAR_MAX_TURN M_PI / 6
 
