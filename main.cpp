@@ -7,7 +7,6 @@
 // Global variables
 Game game;
 Car car;
-Point point;
 sf::RenderWindow window(sf::VideoMode(WIN_W, WIN_H), "autobahn");
 
 void updateDisplayPos(sf::Vector2f &pos, sf::Vector2f &displayPos) {
@@ -16,49 +15,34 @@ void updateDisplayPos(sf::Vector2f &pos, sf::Vector2f &displayPos) {
 }
 
 void update(float dt) {
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && car.speed <= CAR_BRAKE_MIN) {
     car.speed -= CAR_ACC * dt;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && car.speed >= -CAR_BRAKE_MIN) {
     car.speed += CAR_ACC * dt;
   }
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && car.turnAngle < CAR_MAX_TURN) {
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && car.turnAngle < CAR_MAX_TURN) {
     car.turnAngle += CAR_TURN * dt;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && car.turnAngle > -CAR_MAX_TURN) {
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && car.turnAngle > -CAR_MAX_TURN) {
     car.turnAngle -= CAR_TURN * dt;
   }
-  //std::cout << car.turnAngle << std::endl;
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+    car.speed *= (abs(car.speed) > CAR_BRAKE_MIN) ? CAR_BRAKE : 0;
+  }
+  car.speed *= CAR_FRICTION;
   
   float distance = car.speed * dt;
   if (car.turnAngle != 0) {
     float turnRadius = WHEEL_R / sin(car.turnAngle);
     float turnTheta = distance / turnRadius;
-    point.pos = car.pos + sf::Vector2f(-CHASSIS_H, copysignf(CHASSIS_W / 2, turnTheta)) + sf::Vector2f(turnRadius * sin(car.angle + car.turnAngle), turnRadius * cos(car.angle + car.turnAngle));
-    //std::cout << turnPos.x << "," << turnPos.y << std::endl;
-    //car.pos = 
-    //sf::Vector2f offset(car.speed * dt / 2 * (atan(car.turnAngle / 2) * sin(car.turnAngle) - cos(car.turnAngle) + 1), car.speed * dt / 2 * (atan(car.turnAngle / 2) * (1 - cos(car.turnAngle)) - sin(car.turnAngle)));
-    //car.pos += sf::Vector2f(offset.x * sin(car.turnAngle), -offset.y * cos(car.turnAngle));
+    car.angle += turnTheta / 2;
+    float driveDist = copysignf(sqrtf(2 * turnRadius * turnRadius * (1 - cos(turnTheta))), distance);
+    car.pos += sf::Vector2f(driveDist * cos(car.angle), driveDist * sin(car.angle));
   } else {
     car.pos += sf::Vector2f(car.speed * dt * cos(car.angle), car.speed * dt * sin(car.angle));
   }
+
   float angleDegrees = car.angle * 180 / M_PI;
   float turnAngleDegrees = car.turnAngle * 180 / M_PI;
-  /*
-
-  //car.pos += 
-  car.chassis.setPosition(car.pos);
-  car.chassis.setRotation(angleDegrees);
-  car.screen.setPosition(car.pos);
-  car.screen.setRotation(angleDegrees);
-  for (int i = 0; i < 2; i++) {
-    float wheelAngle = car.angle - M_PI / 4 + i * M_PI / 2;
-    car.frontWheels[i].setPosition(car.pos + sf::Vector2f(CHASSIS_WHEEL_D * sin(wheelAngle), -CHASSIS_WHEEL_D * cos(wheelAngle)));
-    car.frontWheels[i].setRotation(angleDegrees + turnAngleDegrees);
-  }
-  for (int i = 0; i < 2; i++) {
-    car.backWheels[i].setPosition(car.pos);
-    car.backWheels[i].setRotation(angleDegrees);
-  }
-  */
   updateDisplayPos(car.pos, car.displayPos);
   car.chassis.setPosition(car.displayPos);
   car.chassis.setRotation(angleDegrees);
@@ -76,9 +60,6 @@ void update(float dt) {
     car.backWheels[i].setPosition(car.displayPos);
     car.backWheels[i].setRotation(angleDegrees);
   }
-
-  updateDisplayPos(point.pos, point.displayPos);
-  point.body.setPosition(point.displayPos);
 }
 
 void draw() {
@@ -90,11 +71,9 @@ void draw() {
   for (int i = 0; i < 2; i++) {
     window.draw(car.backWheels[i]);
   }
-  //window.draw(car.chassis);
-  //window.draw(car.screen);
+  window.draw(car.chassis);
+  window.draw(car.screen);
 
-  window.draw(point.body);
-  
   window.display();
 }
 
@@ -122,11 +101,6 @@ void restart() {
     car.backWheels[i].setOrigin(sf::Vector2f(WHEEL_W / 2 + CHASSIS_WHEEL_D * sin(wheelAngle), WHEEL_H /  2 - CHASSIS_WHEEL_D * cos(wheelAngle)));
     car.backWheels[i].setFillColor(WHEEL_COLOR);
   }
-
-  point.pos = sf::Vector2f(0, 0);
-  point.body.setRadius(POINT_R);
-  point.body.setOrigin(POINT_R, POINT_R);
-  point.body.setFillColor(POINT_COLOR);
 }
 
 int main() {
