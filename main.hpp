@@ -16,9 +16,10 @@ typedef struct {
   sf::CircleShape fumes[3];
   sf::Vector2f pos;
   sf::Vector2f displayPos;
-  float speed;
+  float momentum;
   float turnAngle;
   float angle;
+  int gear;
 } Car;
 
 typedef struct {

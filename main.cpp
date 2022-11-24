@@ -14,31 +14,35 @@ void updateDisplayPos(sf::Vector2f &pos, sf::Vector2f &displayPos) {
   displayPos.y = WIN_H / 2 - pos.x;
 }
 
+// input: fuel, direction
+// output: force
 void update(float dt) {
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-    car.speed *= CAR_BRAKE - CAR_SLOW_FRICTION / (abs(car.speed) + 1);
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && car.speed <= CAR_BRAKE_MIN) {
-    car.speed -= CAR_ACC * dt;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && car.speed >= -CAR_BRAKE_MIN) {
-    car.speed += CAR_ACC * dt;
-  } else {
-    car.speed *= CAR_FRICTION - CAR_SLOW_FRICTION / (abs(car.speed) + 1);
+  float staticFriction = (car.momentum == 0) ? TAR_S_FRICTION * GRAVITY * CAR_MASS * dt : 0;
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && car.momentum > 0) {
+    car.momentum -= BRAKING_F * dt;
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && car.momentum < MAX_MOMENTUM) {
+    car.momentum += ENGINE_F * dt / fabs(car.gear) - staticFriction;
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && car.turnAngle < CAR_MAX_TURN) {
     car.turnAngle += CAR_TURN * dt;
   } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && car.turnAngle > -CAR_MAX_TURN) {
     car.turnAngle -= CAR_TURN * dt;
   }
-  
-  float distance = car.speed * dt;
+
+  float kineticFriction = TAR_K_FRICTION * GRAVITY * CAR_MASS * dt;
+  if (car.momentum > kineticFriction) car.momentum -= kineticFriction;
+  else if (car.momentum < -kineticFriction) car.momentum += kineticFriction;
+  else car.momentum = 0;
+
+  float distance = car.gear * car.momentum * dt / CAR_MASS;
   if (car.turnAngle != 0) {
-    float turnRadius = WHEEL_R / sin(car.turnAngle);
+    float turnRadius = WHEEL_R / sin(car.turnAngle * 0.9);
     float turnTheta = distance / turnRadius;
     car.angle += turnTheta / 2;
     float driveDist = copysignf(sqrtf(2 * turnRadius * turnRadius * (1 - cos(turnTheta))), distance);
     car.pos += sf::Vector2f(driveDist * cos(car.angle), driveDist * sin(car.angle));
   } else {
-    car.pos += sf::Vector2f(car.speed * dt * cos(car.angle), car.speed * dt * sin(car.angle));
+    car.pos += sf::Vector2f(distance * cos(car.angle), distance * sin(car.angle));
   }
 
   float angleDegrees = car.angle * 180 / M_PI;
@@ -81,7 +85,8 @@ void restart() {
   game.state = ST_INIT;
 
   car.pos = sf::Vector2f(0, 0);
-  car.speed = 0;
+  car.gear = 1;
+  car.momentum = 0;
   car.angle = 0;
   car.turnAngle = 0;
   car.chassis.setSize(sf::Vector2f(CHASSIS_W, CHASSIS_H));
@@ -121,6 +126,15 @@ int main() {
           switch (event.key.code) {
             case sf::Keyboard::Escape:
               window.close();
+              break;
+            case sf::Keyboard::R:
+              if (car.momentum < TAR_K_FRICTION * GRAVITY * CAR_MASS / 10) car.gear = -1;
+              break;
+            case sf::Keyboard::Num1:
+              if (car.gear > 0 || car.momentum < TAR_K_FRICTION * GRAVITY * CAR_MASS / 10) car.gear = 1;
+              break;
+            case sf::Keyboard::Num2:
+              if (car.gear > 0) car.gear = 2;
               break;
           }
           break;
